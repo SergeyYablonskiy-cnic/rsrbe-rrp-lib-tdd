@@ -115,7 +115,7 @@ sub debug
 # ----------------------------------------------------------
 {
 
-	my $fpath = abs_path('../../logs') . '/debug.log'; # opt/../logs
+	my $fpath = abs_path('../logs') . '/debug.log'; # opt/logs
 
 	# create dump
 	for my $data (@_) {
@@ -213,7 +213,7 @@ sub base_path
 	unless ($cache{base_path}) {
 
 		# ../opt/(metaregistry)
-		my ($path) = grep { m|/opt/meta[^/]+$| } @INC;
+		my ($path) = grep { m{/opt/(meta|tld)[^/]+$} } sort @INC;
 		die ('Can not define the base path in INC: '.(join "\n", @INC).'.') unless $path;
 		$cache{base_path} = $path;
 

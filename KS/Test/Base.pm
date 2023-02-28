@@ -7,17 +7,23 @@ use warnings;
 
 use FindBin('$Bin');
 
-our $root_dir;
+our $ROOT_DIR;
+our $PROJECT_DIR;
+
 BEGIN {
-	$root_dir = (split '/opt/metaregistry5/', $Bin)[0] . '/opt';
+	# project can be rolled up in a home directory
+	# (.../opt)(metaregistry5|tld-xxx)
+	$Bin =~ m|^(.+opt)/([^/]+)|;
+	$ROOT_DIR = $1;
+	$PROJECT_DIR = $1 .'/'. $2;
 }
 
 use lib (
-	$root_dir . '/lib',
-	$root_dir . '/lib-mreg',
-	$root_dir . '/metaregistry5',
-	$root_dir . '/metaregistry5/Lib',
-	$root_dir . '/metaregistry5/tests/lib'
+	$ROOT_DIR . '/lib',
+	$ROOT_DIR . '/lib-mreg',
+	$ROOT_DIR . '/metaregistry5',
+	$ROOT_DIR . '/metaregistry5/Lib',
+	$ROOT_DIR . '/lib-test'
 );
 
 use KS::Test::Prepare;
@@ -28,15 +34,15 @@ use KS::Accessor (
 	project_dir => 'project_dir',
 );
 
+
+
 sub new {
 	my $class = shift;
 	my %p = @_;
 
-	my $project_dir = $root_dir . '/metaregistry5';
-
 	my $self = bless {
-		project_dir => $project_dir,
-		prepare     => KS::Test::Prepare->new( project_dir => $project_dir ),
+		project_dir => $PROJECT_DIR,
+		prepare     => KS::Test::Prepare->new( project_dir => $PROJECT_DIR ),
 	}, $class;
 
 	return $self;
