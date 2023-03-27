@@ -157,11 +157,18 @@ our $schema;
 
 $schema = new PTF::Schema($OPMODE);
 
+# singleton 
+my $SELF = undef;
+
+
+
 # Load enabled commands
-
-
 sub new {
 		my $class = shift;
+
+		# singleton 
+		return $SELF if $SELF;
+
 		my %p = @_;
 
 		my $self = bless {
@@ -183,6 +190,8 @@ sub new {
 		my $commandHash = $self->require_commands( $p{load_commands} );
 		$self->load_commands($commandHash);
 		$self->createSession;
+
+		$SELF = $self;
 
 		return $self;
 
@@ -450,10 +459,17 @@ sub checkSession {
 sub handleRequest 
 {
 	my $self = shift;
+
   my $request = (ref($_[0]) ? shift : undef);
 	my $log_request = shift || '';
 
-    # Reconnect to db if connection lost	
+	KS::Test::Logger->get_logger->info(
+		'Request <= '.$request->commandname .', '
+		.'socket: ' . ( $request->option('SOCKET') || '-') .', '
+		.'rid: '  . ( $request->rid || '-' ) 
+	);
+
+	# Reconnect to db if connection lost	
 	if( $self->checkSession() )
 	{
 		$self->log(0,"Error: Database connect is broken! Reconnect");

@@ -115,7 +115,9 @@ sub debug
 # ----------------------------------------------------------
 {
 
-	my $fpath = abs_path('../logs') . '/debug.log'; # opt/logs
+	# opt/logs
+	# my $fpath = abs_path( $cache{base_path} =~ /tld/ ? '../../logs' : '../logs') . '/debug.log'; 
+	my $fpath = abs_path( base_path() =~ /tld/ ? '../../logs' : '../logs') . '/debug.log'; 
 
 	# create dump
 	for my $data (@_) {
@@ -178,9 +180,9 @@ sub read_file
 	}
 
 	$path = KS::Util::abs_path($path);
-	unless (-e $path) { return carp ("File '$path' not found.") };
+	unless (-e $path) { return croak ("ERROR: file '$path' not found.") };
 
-	open(F, '<' .($p{utf8} ? ':utf8' : '') , $path) or carp('Can not open file : '.$path.'. '.$!);
+	open(F, '<' .($p{utf8} ? ':utf8' : '') , $path) or croak('Can not open file : '.$path.'. '.$!);
 	$content = <F>;
 	close F;
 
@@ -210,17 +212,27 @@ sub read_data
 sub base_path
 # ----------------------------------------------------------
 {
-	unless ($cache{base_path}) {
+	return $cache{base_path}
+		if $cache{base_path};
 
-		# ../opt/(metaregistry)
-		my ($path) = grep { m{/opt/(meta|tld)[^/]+$} } sort @INC;
-		die ('Can not define the base path in INC: '.(join "\n", @INC).'.') unless $path;
-		$cache{base_path} = $path;
+	use FindBin('$Bin');
 
-	}
+	# ../opt/metaregistry5
+	# ../opt/tld/xx
+	# ../opt/batch-mreg
+	my @dir_list = $Bin ? $Bin : sort @INC;
+
+	my ($path) = grep { m[ /opt/(meta|batch|tld|cron) ]x } @dir_list;
+
+	$path =~ m[ (.*/opt)/([^/]+)/?([^/]+)? ]x;
+	$path = $1.'/'.$2;
+	# tld projects are placed in tld-subdir
+	$path .= '/'.$3 if $2 eq 'tld';
+
+	die ('Can not define the base path in the directories list: '.(join "\n", @dir_list).'.') unless $path;
+	$cache{base_path} = $path;
 
 	return $cache{base_path};
-
 }
 # ----------------------------------------------------------
 

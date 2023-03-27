@@ -26,12 +26,21 @@ use lib (
 	$ROOT_DIR . '/lib-test'
 );
 
+
 use KS::Test::Prepare;
 use KS::Util;
+use KS::Test::GarbageCollector;
+use KS::Test::Logger;
+use Mock::Metaregistry;
 
 use KS::Accessor (
-	prepare     => 'prepare',
 	project_dir => 'project_dir',
+	root_dir    => 'root_dir',
+	dbh         => 'dbh',
+	prepare     => 'prepare',
+	gc          => 'gc',
+	mreg        => 'mreg',
+	logger      => 'logger',
 );
 
 
@@ -41,27 +50,90 @@ sub new {
 	my %p = @_;
 
 	my $self = bless {
+		root_dir    => $ROOT_DIR,
 		project_dir => $PROJECT_DIR,
-		prepare     => KS::Test::Prepare->new( project_dir => $PROJECT_DIR ),
+		dbh         => undef,
+		prepare     => undef,
+		mreg        => undef,
+		gc          => undef,
+		logger      => undef,
 	}, $class;
+
+	return $self->_init(%p);
+}
+
+
+
+sub _init {
+	my ($self, %p) = @_;
+
+	$self->{logger}  = KS::Test::Logger->new(root_dir => $self->root_dir);
+
+	$self->{prepare} = KS::Test::Prepare->new( 
+		project_dir => $self->project_dir,
+		logger      => $self->logger 
+	);
+
+	$self->{mreg} =  METARegistry->new(
+		project_dir   => $self->project_dir,
+		load_commands => $p{load_commands} || [],
+	);
+
+	$self->{dbh} = $self->mreg->{DBH};
+
+	$self->{gc}  = KS::Test::GarbageCollector->new(
+		dbh    => $self->dbh,
+		logger => $self->logger,
+	);
 
 	return $self;
 }
 
 
 
-sub log_request {
-	my ($self, $req, $res) = @_;
+## bool exec_script(string path)
+# execute script
+# arg "path" - string path to the script, might be relative or absolute
+# arg "created" - string timestamp of created element, format YYYY-MM-DD hh:mm:ss
+# retval string output for stdout
+sub exec_script {
+	my ($self, $path) = @_;
 
-	KS::Util::debug("\n",
-		KS::Util::format_date(time, 'YYYY-MM-DD hh:mm:ss') . ' ' . $req->commandname,
-		'----------- START --------------',
-		$req->toString, $res->toString,
-		'------------ END ----------------'
-	);
-	return;
+	use IPC::Open2;
+
+	# append root dir only for relative path
+	$path = $self->root_dir . '/' . $path
+		unless $path =~ m|^/|; 
+
+	my ($in, $out);
+
+	my $pid = open2($out, $in, $path);
+	waitpid($pid,0);
+
+	local $/ = undef;
+	my $response = <$out>;
+
+	# todo: logging to the file
+	# $self->logger->log_script_output(script => $path, res => $response);
+	$self->logger->info('Execute script: ' . $path .'; output: '.$response );
+
+	return $response;
+}
+
+
+
+
+## bool log_request(obj req, obj res)
+# logging request and response as string
+# arg "req" - obj PTF::Request
+# arg "res" - obj PTF::Response
+# retval true for success
+# retval false for error
+sub log_request {
+	return shift->logger->request(@_);
 }
 
 
 
 1;
+

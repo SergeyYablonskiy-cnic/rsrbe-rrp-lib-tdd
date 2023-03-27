@@ -1,1 +1,41 @@
-legend:
+The legend:
+ [+] - new features
+ [-] - removed functionality
+ [!] - behavior has changed
+ [?] - refactoring (without changing the system behavior)
+ [*] - bug 
+
+
+Version numbering: <major>.<minor>.<revision>:
+  major    - magor new features or changes. Field width - thee characters
+  minor    - minor changes and bug fixes. Field width - two characters
+  revision - intermediate commits, the stability of the code is not guaranteed. Field width - two characters
+
+
+Example:
+
+Version 00.00.01 [DD.MM.YYYY] user
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ? Some refactoring
+  * Bug fix
+  + New features
+
+
+
+Version 002.00.00 [27.03.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Mock modules "Mock/PTF/Metaregistry.pm" and "Mock/PTF/Request.pm" for mocking responses from external interfaces
+  + Garbase collector created (only for domain so far)
+  + Logger module added based on Log4perl
+  * Improved defined base path for project dir
+
+
+
+
+Version 001.00.00 [28.02.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Base modules added: Base, Prepare, Utils and Accessor
+
+
+
+
