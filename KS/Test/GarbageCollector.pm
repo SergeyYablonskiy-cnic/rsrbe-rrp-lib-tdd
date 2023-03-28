@@ -29,7 +29,6 @@ sub new {
 
 	# my ($max_id) = $self->dbh->selectrow_array( ' SELECT MAX(job_index) FROM jobs ' );
 	# $self->{start_point}{jobs} = $max_id;
-
 	# KS::Util::debug($self->{start_point});
 
 	return $self;
@@ -64,7 +63,7 @@ sub add {
 sub cleanup {
 	my ($self, $type, $id) = @_;
 
-	$self->logger->info('GC clean: '. $type .' => ' . $id );
+	$self->logger->debug('GC clean: '. $type .' => ' . $id );
 	my $method = '_delete_'.$type;
 	$self->$method($id);
 }

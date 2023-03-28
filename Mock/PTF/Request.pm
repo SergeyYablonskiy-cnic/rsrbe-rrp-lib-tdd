@@ -80,7 +80,7 @@ sub call {
 		return $self->_call_origin(@_);
 	}
 
-	KS::Test::Logger->get_logger->info(
+	$self->logger->info(
 		'Request [mocked] => '.$self->commandname .', '
 		.'rid: '  . $self->rid .', '
 		.'socket: ' . ( $self->option('SOCKET') || '-')
@@ -105,18 +105,18 @@ sub call {
 			? $MOCK_CONFIG->{patterns}{$pattern}[ $MOCK_CONFIG->{counter}{$pattern} ]
 			: $MOCK_CONFIG->{patterns}{$pattern};
 
-		KS::Test::Logger->get_logger->debug('Mock TLD response for the pattern "'.$pattern.'": '.$response_tt_file);
+		$self->logger->debug('Mock TLD response for the pattern "'.$pattern.'": '.$response_tt_file);
 
 		my $response_body = KS::Util::read_file( $response_tt_file );
 		$res->parse( $response_body );
 
-		KS::Test::Logger->get_logger->request($self, $res);
+		$self->logger->request($self, $res);
 
 		return $res;
 
 	}
 
-	KS::Test::Logger->get_logger->error('Can not find any suitable MOCK response for the request rid: '.$self->rid);
+	$self->logger->error('Can not find any suitable MOCK response for the request rid: '.$self->rid);
 
 	return undef;
 }
@@ -133,7 +133,7 @@ sub _call_origin {
 
 	$self->reset_rid;
 
-	KS::Test::Logger->get_logger->info(
+	$self->logger->info(
 		'Request => '.$self->commandname . ', '
 		.'rid: ' . $self->rid . ', '
 		.'socket: ' . ( $self->option('SOCKET') || '-') 
@@ -155,7 +155,7 @@ sub _call_origin {
 
 	my $res = $ptf->sendCommand($self);
 
-	KS::Test::Logger->get_logger->request($self, $res);
+	$self->logger->request($self, $res);
 
 
 	return $res;

@@ -31,7 +31,6 @@ use KS::Test::Prepare;
 use KS::Util;
 use KS::Test::GarbageCollector;
 use KS::Test::Logger;
-use Mock::Metaregistry;
 
 use KS::Accessor (
 	project_dir => 'project_dir',
@@ -74,6 +73,23 @@ sub _init {
 		logger      => $self->logger 
 	);
 
+	return $self;
+}
+
+
+
+## obj load_metaregistry(hash p)
+# load the metaregistry mock module
+# param "p" hash with keys:
+#    load_commands   - arrayref of names of load commans, any others won't be loaded
+#                      that makes start metaregistry a little bit faster
+# return obj METARegistry
+sub load_metaregistry {
+	my ($self, %p) = @_;
+
+	require  Mock::Metaregistry;
+	require  Mock::Log;
+
 	$self->{mreg} =  METARegistry->new(
 		project_dir   => $self->project_dir,
 		load_commands => $p{load_commands} || [],
@@ -86,7 +102,7 @@ sub _init {
 		logger => $self->logger,
 	);
 
-	return $self;
+	return $self->mreg;
 }
 
 

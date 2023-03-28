@@ -7,7 +7,7 @@ The legend:
 
 
 Version numbering: <major>.<minor>.<revision>:
-  major    - magor new features or changes. Field width - thee characters
+  major    - magor new features or changes. Field width - three characters
   minor    - minor changes and bug fixes. Field width - two characters
   revision - intermediate commits, the stability of the code is not guaranteed. Field width - two characters
 
@@ -19,6 +19,14 @@ Version 00.00.01 [DD.MM.YYYY] user
   ? Some refactoring
   * Bug fix
   + New features
+
+
+
+Version 002.01.00 [28.03.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ! Redefine metaregistry "log" method for forward messages to the test event.log file
+  ! Metaregistry is not auto loaded in constructor, call the method "load_metaregistry" instead
+  ? Small code improvment
 
 
 

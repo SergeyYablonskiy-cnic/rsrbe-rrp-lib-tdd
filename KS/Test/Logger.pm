@@ -31,7 +31,7 @@ sub new {
 	my %p        = @_;
 
 	my $self = bless {
-		logfile         => $p{root_dir} . '/logs/test.log',
+		logfile         => $p{root_dir} . '/logs/event.log',
 		logfile_request => $p{root_dir} . '/logs/request.log',
 		logger          => undef,
 	}, $class;
@@ -85,9 +85,18 @@ sub _init {
 ## bool start_test(string message)
 # print to "test.log" a filename of the new test.
 sub start_test {
-	my ($self, $message) = @_;
-	# return $self->info("\e[1;31m".'Start test: '.$0."\e[0m");
-	return $self->info("\e[1;32m".'Start test: '.$0."\e[0m");
+	my ($self, $test_name) = @_;
+
+	# return $self->info("\e[1;31m".'Start test: '.$0."\e[0m");  # red
+
+	my($package, $filename, $line, $sub) = caller();
+
+	Test::Most::note($test_name);
+	# green color
+	# $self->info("\e[1;32mStart test \"$test_name\" [$filename:$line] \e[0m");
+	$self->info("\e[1;32m***** $test_name ***** $filename:$line \e[0m");
+
+	return 1;
 }
 
 
