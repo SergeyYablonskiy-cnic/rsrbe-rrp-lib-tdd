@@ -22,6 +22,12 @@ Version 00.00.01 [DD.MM.YYYY] user
 
 
 
+Version 002.02.00 [29.03.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ! prepare->ptf_request now accepted a template string as argument
+  * Metaregistry handler called undefined method rid at PTF::Request package
+
+
 Version 002.01.00 [28.03.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ! Redefine metaregistry "log" method for forward messages to the test event.log file
