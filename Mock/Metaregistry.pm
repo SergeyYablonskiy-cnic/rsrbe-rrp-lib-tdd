@@ -466,7 +466,7 @@ sub handleRequest
 	KS::Test::Logger->get_logger->info(
 		'Request <= '.$request->commandname .', '
 		.'socket: ' . ( $request->option('SOCKET') || '-') .', '
-		.'rid: '  . ( $request->rid || '-' ) 
+		.'rid: '  . ( $request->can('rid') ? $request->rid : '-' ) 
 	);
 
 	# Reconnect to db if connection lost	

@@ -42,18 +42,20 @@ sub new {
 ## @method obj ptf_request(string file_path, hash p)
 # prepare PTF request object
 # @param \c file_path - \c string path to the template file
+#                       if file_path is a multiline string 
+#                       it will treated as template, not a file path
 # @param \c p params  - \c key-value pairs for the template variables
 # @return \c obj PTF::Request
 sub ptf_request {
 	my ($self, $fpath, %p) = @_;
 
-	my $tmpl = KS::Util::read_file($fpath);
+	# if we got multiline in the fpath then it is a template string actually
+	my $tmpl = $fpath =~ /\n/m ? $fpath : KS::Util::read_file($fpath);
 	my $content = $self->{tt}->context->process(\$tmpl, \%p);
 	my $req = PTF::Request->new->parse($content);
 
 	return $req;
 }
-
 
 
 
