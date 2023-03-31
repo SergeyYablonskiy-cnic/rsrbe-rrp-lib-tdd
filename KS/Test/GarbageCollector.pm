@@ -8,7 +8,6 @@ use utf8;
 
 
 use KS::Accessor (
-	dbh         => 'dbh',
 	list        => 'list',
 	start_point => 'start_point',
 	logger      => 'logger',
@@ -35,6 +34,9 @@ sub new {
 }
 
 
+sub dbh { return $_[0]->{dbh} };
+
+
 ## bool add(string type, string id)
 # add element to the garbage collector
 # arg "type" - string element type (domain/contact/etc)
@@ -47,7 +49,7 @@ sub add {
 
 	# object should be deleted in reverse added order in case avoid conflicts
 	unshift @{$self->list}, { $type => $id };
-	$self->logger->debug('GC an element added: '. $type .' => ' . $id );
+	$self->logger->debug('GC add: '. $type .' ' . $id );
 	return 1;
 }
 
@@ -63,13 +65,30 @@ sub add {
 sub cleanup {
 	my ($self, $type, $id) = @_;
 
-	$self->logger->debug('GC clean: '. $type .' => ' . $id );
+	$self->logger->debug('GC clean: '. $type .' ' . $id );
 	my $method = '_delete_'.$type;
 	$self->$method($id);
 }
 
 
 
+sub cleanup_all {
+	my $self = shift;
+
+	# KS::Util::debug('cleanup all:', $self->list);
+	while ( my $item  = shift @{$self->list} ) {
+		my ($type, $id) = each %$item;
+		$self->cleanup($type, $id );
+	}
+
+	return 1;
+}
+
+
+
+
+## bool _delete_domain(string domain_name)
+# delete domain from database
 sub _delete_domain {
 	my ($self, $domain) = @_;
 
@@ -85,20 +104,6 @@ sub _delete_domain {
 	# $self->dbh->do( 'DELETE FROM jobs WHERE script like ? and job_index > ?',   undef, '%'.$domain.'%', $self->start_point->{jobs} );
 	$self->dbh->do( 'DELETE FROM jobs WHERE script LIKE ?',   undef, '%'.$domain.'%' );
 	$self->logger->debug('GC domain "'.$domain.'" has been deleted' );
-
-	return 1;
-}
-
-
-
-sub DESTROY {
-	my $self = shift;
-
-	# KS::Util::debug('DESTROY', $self->list);
-	for my $item ( @{$self->list} ) {
-		my ($type, $id) = each %$item;
-		$self->cleanup($type, $id );
-	}
 
 	return 1;
 }

@@ -6,9 +6,12 @@ use strict;
 use warnings;
 
 use Log::Log4perl;
+use Log::Log4perl::Level;
+use Term::ANSIColor;
 
 use KS::Accessor (
-	logger         => 'logger',
+	logger         => 'logger_event',
+	logger_event   => 'logger_event',
 	logger_request => 'logger_request',
 );
 
@@ -16,13 +19,30 @@ use KS::Accessor (
 # create aliases for the log4perl methods
 {
 	no strict "refs";
+
 	for my $method ( qw( info debug warn error fatal ) ) {
-		*{ $method } = sub { return shift->{logger}->$method(@_); };
+
+		*{ $method } = sub { 
+			return $_[0]->logger_event->$method( 
+				( $method eq 'error' || $method eq 'fatal' )
+					? colored(['bright_red '], $_[1])
+					: $_[1]
+			);
+		};
+
 	}
+
 }
 
 
+
+
 my $LOGGER = undef;
+
+# singletone
+sub get_logger {
+	return $LOGGER;
+}
 
 
 
@@ -31,9 +51,8 @@ sub new {
 	my %p        = @_;
 
 	my $self = bless {
-		logfile         => $p{root_dir} . '/logs/event.log',
+		logfile_event   => $p{root_dir} . '/logs/event.log',
 		logfile_request => $p{root_dir} . '/logs/request.log',
-		logger          => undef,
 	}, $class;
 
 	$LOGGER = $self;
@@ -43,43 +62,62 @@ sub new {
 
 
 
-sub get_logger {
-	return $LOGGER;
-}
-
-
-
-
 sub _init {
 	my $self = shift;
 
+	use Log::Log4perl::Layout::ColoredPatternLayout ;
 	Log::Log4perl->init( {
 		'log4perl.category.event'   => 'DEBUG, event',
 		'log4perl.category.request' => 'DEBUG, request',
 
 		'log4perl.appender.event'             => 'Log::Log4perl::Appender::File',
-		'log4perl.appender.event.filename'    =>  $self->{logfile},
+		'log4perl.appender.event.filename'    =>  $self->{logfile_event},
 		'log4perl.appender.event.mode'        => 'append',
 		'log4perl.appender.event.layout'      => 'PatternLayout',
 		'log4perl.appender.event.layout.ConversionPattern' => '%d{yyyy-MM-dd HH:mm:ss} %P %p %m%n',
 
-		'log4perl.appender.request'             => 'Log::Log4perl::Appender::File',
-		'log4perl.appender.request.filename'    =>  $self->{logfile_request},
-		'log4perl.appender.request.mode'        => 'append',
-		'log4perl.appender.request.layout'      => 'PatternLayout',
-		'log4perl.appender.request.layout.ConversionPattern' => '%d{yyyy-MM-dd HH:mm:ss} %p %m%n',
-
-		# 'log4perl.appender.LOGFILE.layout.ConversionPattern' => '%d{yyyy-MM-dd HH:mm:ss} pid:%P %p %m%n',
-		# 'log4perl.appender.LOGFILE.layout.ConversionPattern' => '%d{yyyy-MM-dd hh:mm:ss SSSSS} %P %p %m%n',
-		# explain format: yyyy-mm-dd hh:mm:ss millisecond pid level message new_line
+		'log4perl.appender.request'           => 'Log::Log4perl::Appender::File',
+		'log4perl.appender.request.filename'  =>  $self->{logfile_request},
+		'log4perl.appender.request.mode'      => 'append',
+		'log4perl.appender.request.layout'    => 'PatternLayout',
+		'log4perl.appender.request.layout.ConversionPattern' => '%d{yyyy-MM-dd HH:mm:ss} %m%n',
 	});
 
-
-	$self->{logger}         = Log::Log4perl->get_logger('event');
+	$self->{logger_event}   = Log::Log4perl->get_logger('event');
 	$self->{logger_request} = Log::Log4perl->get_logger('request');
 
 	return $self;
 }
+
+
+
+## bool set_level(string level)
+# change log level for events
+# arg "level" - string new level, might be one of:
+#               off, fatal, error, warn, info, debug, trace, all
+# retval true for success
+sub set_level {
+	my ($self, $level) = @_;
+
+	my $new_level = {
+			off    => $OFF,
+			fatal  => $FATAL,
+			error  => $ERROR,
+			warn   => $WARN,
+			info   => $INFO,
+			debug  => $DEBUG,
+			trace  => $TRACE,
+			all    => $ALL,
+		}->{ lc $level };
+
+	return $self->logger_event->logcroak( colored(['bright_red'], 'Invalid log level "'.$level.'"') )
+		unless $new_level;
+
+	$self->logger->level($new_level);
+
+	return 1;
+}
+
 
 
 ## bool start_test(string message)
@@ -87,35 +125,37 @@ sub _init {
 sub start_test {
 	my ($self, $test_name) = @_;
 
-	# return $self->info("\e[1;31m".'Start test: '.$0."\e[0m");  # red
-
 	my($package, $filename, $line, $sub) = caller();
 
 	Test::Most::note($test_name);
-	# green color
-	# $self->info("\e[1;32mStart test \"$test_name\" [$filename:$line] \e[0m");
-	$self->info("\e[1;32m***** $test_name ***** $filename:$line \e[0m");
+	$self->info( colored(['green'], "***** $test_name ***** $filename:$line") );
 
 	return 1;
 }
 
 
 
-## bool request(obj req, obj res)
+## bool request(obj req, obj res, str rid, [str direction])
 # logging request and response as string
-# arg "req" - obj PTF::Request
-# arg "res" - obj PTF::Response
+# arg "req"       - obj PTF::Request
+# arg "res"       - obj PTF::Response
+# arg "rid"       - string request id, optional
+# arg "direction" - string request direction, optional:
+#                     in  - for input requests
+#                     out - for output requests
 # retval true for success
 # retval false for error
 sub request {
-	my ($self, $req, $res) = @_;
+	my ($self, $req, $res, $rid, $direction) = @_;
 
-	my $rid = $req->can('rid') ? ( $req->rid || '-') : '-';
+	$direction = {in => '<= ', out => '=> '}->{$direction || 'unknown'} || '';
+
+	$rid ||= $req->can('rid') ? $req->rid : '-';
 
 	my $command = ref $req eq 'PTF::Request' ? $req->commandname : '-';
 
 	return $self->logger_request->info(
-		"Command: ". $command . '; rid: ' . $rid . "\n"
+		$direction . $command . ' ' . $rid . "\n"
 		. 'Socket [' . ($res->{is_mocked} ? 'mocked' : 'unmocked') . ']:  '. ( $req->option('SOCKET') || '-' ). "\n"
 		. "----------- REQUEST START -------------- \n"
 		. ( ref $req eq 'PTF::Request'  ? $req->toString : ( $req || '!empty string!' ) ) . "\n"
@@ -124,6 +164,22 @@ sub request {
 	);
 
 	return 1;
+}
+
+
+## bool request_in(obj req, obj res, str rid)
+# logging input request and response as string
+# note: for details see "request" method
+sub request_in {
+	return shift->request(@_, 'in');
+}
+
+
+## bool request_out(obj req, obj res, str rid)
+# logging output request and response as string
+# note: for details see "request" method
+sub request_out {
+	return shift->request(@_, 'out');
 }
 
 

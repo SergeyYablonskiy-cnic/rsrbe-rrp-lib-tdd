@@ -145,12 +145,12 @@ sub debug
 # ----------------------------------------------------------
 
 
-## @method bool debug_trace(void)
-# write calltrace into debug-log
+## @method bool debug_trace([hashref|arrayref|string])
+# print to the debug.log income arguments and a calltrace
 sub debug_trace
 # ----------------------------------------------------------
 {
-	debug( trace() );
+	debug( @_, trace() );
 }
 # ----------------------------------------------------------
 
@@ -281,6 +281,19 @@ sub write_file
 }
 # ----------------------------------------------------------
 
+
+
+## bool in_array_str(str needle, arrayref haystack)
+# searches for needle in haystack
+# retval TRUE if the needle found in the haystack
+# retval FALSE otherwise
+sub in_array_str {
+	my ($str, $array) = @_;
+	for (@$array) {
+		return 1 if $str eq $_;
+	}
+	return 0;
+}
 
 
 

@@ -8,6 +8,8 @@ use utf8;
 
 use KS::Accessor (
 	tt     => 'tt',
+	dbh    => 'dbh',
+	mreg   => 'mreg:rw',
 	logger => 'logger',
 );
 
@@ -19,16 +21,17 @@ use Template;
 sub new {
 	my $class = shift;
 	my %p     = @_;
-	my $project_dir = shift;
 
 	my $self = bless {
 		project_dir => $p{project_dir},
+		mreg        => $p{mreg},
 		logger      => $p{logger},
+		dbh         => $p{dbh},
 		tt          => undef,
 	}, $class;
 
 	$self->{tt} = Template->new(
-		INCLUDE_PATH => $project_dir,
+		INCLUDE_PATH => $p{project_dir},
 		ABSOLUTE =>  0,
 		ENCODING => 'utf8',
 		RELATIVE =>  0,
@@ -79,6 +82,109 @@ sub mock_ptf_response {
 
 	return 1;
 }
+
+
+
+
+## bool create_domain(hash p)
+# create domain in the system
+# param "p" hash with keys:
+#    name     - string domain name
+# retval true for success
+# retval false for error
+sub create_domain {
+	my ($self, %p) = @_;
+
+	my $user            = $p{user} || 'messe';
+	my $period          = $p{period} || 1;
+	my $period_type     = $p{period_type} || 'YEAR';
+	my $registryaccount = $p{'registryaccount'} || 'TEST/keys';
+	my $auth            = $p{'auth'} || 'xxxx-test-auth-xxx';
+
+	my $sth = $self->dbh->prepare(qq{
+		INSERT INTO domains 
+		(
+			domain,
+			created_by,
+			created_date,
+			updated_by,
+			updated_date,
+			registrar,
+			registration_expiration_date,
+			paid_until,
+			zone,
+			auth_code,
+			registryaccount
+		) 
+		VALUES 
+		(
+			?,
+			?,
+			now(),
+			?,
+			now(),
+			?,
+			DATE_ADD(now(), INTERVAL $period $period_type),
+			DATE_ADD(now(), INTERVAL $period $period_type),
+			?,
+			?,
+			?
+		)
+	});
+
+	my $zone = METARegistry::getZone( $p{name} );
+	$sth->execute( $p{name}, $user, $user, $user, $zone, $auth, $registryaccount )
+		or die $sth->errstr;
+
+	# 	my $ret = $sth->execute($domain,$user,$user,$user,$zone,$auth,$registryaccount);
+
+	# KS::Util::debug([$p{name},$user,$user,$user,$zone,$auth,$registryaccount]);
+	# KS::Util::debug(qq{
+	# 	INSERT INTO domains 
+	# 	(
+	# 		domain,
+	# 		created_by,
+	# 		created_date,
+	# 		updated_by,
+	# 		updated_date,
+	# 		registrar,
+	# 		registration_expiration_date,
+	# 		paid_until,
+	# 		zone,
+	# 		auth_code,
+	# 		registryaccount
+	# 	) 
+	# 	VALUES 
+	# 	(
+	# 		?,
+	# 		?,
+	# 		now(),
+	# 		?,
+	# 		now(),
+	# 		?,
+	# 		DATE_ADD(now(), INTERVAL $period $period_type),
+	# 		DATE_ADD(now(), INTERVAL $period $period_type),
+	# 		?,
+	# 		?,
+	# 		?
+	# 	)
+	# });
+
+
+	# 		"INSERT INTO domains (
+	# 			domain, created_by, created_date, updated_by, updated_date, registrar, ".
+	# 			"registration_expiration_date, paid_until, zone, auth_code, registryaccount) ".
+	# 		"VALUES (?,?,now(),?,now(),?,DATE_ADD(now(), INTERVAL $period $period_type),".
+	# 			"DATE_ADD(now(), INTERVAL $period $period_type),?,?,?);");
+	# 	my $ret = $sth->execute($domain,$user,$user,$user,$zone,$auth,$registryaccount);
+
+	# $self->dbh->prepare();
+
+
+	return $p{name};
+}
+
+
 
 1;
 

@@ -27,14 +27,20 @@ use lib (
 );
 
 
+# System modules
+use DB;
+
+# Test modules
 use KS::Test::Prepare;
 use KS::Util;
 use KS::Test::GarbageCollector;
 use KS::Test::Logger;
 
+
 use KS::Accessor (
 	project_dir => 'project_dir',
 	root_dir    => 'root_dir',
+	db          => 'db',
 	dbh         => 'dbh',
 	prepare     => 'prepare',
 	gc          => 'gc',
@@ -51,6 +57,7 @@ sub new {
 	my $self = bless {
 		root_dir    => $ROOT_DIR,
 		project_dir => $PROJECT_DIR,
+		db          => undef,
 		dbh         => undef,
 		prepare     => undef,
 		mreg        => undef,
@@ -68,14 +75,29 @@ sub _init {
 
 	$self->{logger}  = KS::Test::Logger->new(root_dir => $self->root_dir);
 
+	$self->{db}  = DB->new({MASTER => 1, SLAVE1 => 1, OPMODE => 'DEV'});
+	$self->{dbh} = $self->db->master;
+
 	$self->{prepare} = KS::Test::Prepare->new( 
 		project_dir => $self->project_dir,
-		logger      => $self->logger 
+		logger      => $self->logger,
+		dbh         => $self->dbh,
+	);
+
+	$self->{gc}  = KS::Test::GarbageCollector->new(
+		dbh    => $self->dbh,
+		logger => $self->logger,
 	);
 
 	return $self;
 }
 
+
+sub DESTROY {
+	my $self = shift;
+	$self->gc->cleanup_all;
+	return 1;
+}
 
 
 ## obj load_metaregistry(hash p)
@@ -95,12 +117,7 @@ sub load_metaregistry {
 		load_commands => $p{load_commands} || [],
 	);
 
-	$self->{dbh} = $self->mreg->{DBH};
-
-	$self->{gc}  = KS::Test::GarbageCollector->new(
-		dbh    => $self->dbh,
-		logger => $self->logger,
-	);
+	$self->prepare->mreg($self->mreg);
 
 	return $self->mreg;
 }

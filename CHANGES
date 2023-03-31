@@ -22,6 +22,17 @@ Version 00.00.01 [DD.MM.YYYY] user
 
 
 
+Version 002.03.00 [31.03.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ? Move DESTROY method from the Logger to the Test::Base module for more stability working
+  + Added cleanup_all method for clean all temporary objects in owner_contacts
+  ? Colorized error messages in the event.log
+  + Added set_level method for change log level on fly
+  + Draft method for create domain
+  ! The wrapper "process_request" is using now instead of "handleRequest" to start metaregistry
+
+
+
 Version 002.02.00 [29.03.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ! prepare->ptf_request now accepted a template string as argument

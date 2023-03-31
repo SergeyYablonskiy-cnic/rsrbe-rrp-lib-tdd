@@ -456,18 +456,52 @@ sub checkSession {
 	return 0;
 }
 
+
+
+
+
+## bool xxx_xxx(hash p)
+# short description
+# param "p" hash with keys:
+#    id       - int message id
+#    subject  - string message subject
+# arg "id" - int message id
+# arg "created" - string timestamp of created element, format YYYY-MM-DD hh:mm:ss
+# retval int "id" when element was success created
+# retval true for success
+# retval false for error
+# return obj Model::Archive
+# note: some note string ...
+# note: ... continie notes
+sub process_request {
+	my ($self, $req) = @_;
+
+	my $rid = ( Time::HiRes::gettimeofday =~ /(\d+\.\d{3})/ )[0];
+	my $logger = KS::Test::Logger->get_logger;
+
+	$logger->info(
+		'Request <= '.$req->commandname .', '
+		. 'socket: ' . ( $req->option('SOCKET') || '-') .', '
+		. 'rid: '    . $rid
+	);
+
+	my $res = $self->handleRequest($req);
+
+	$logger->info('Mreg response ['.$rid.']: '.$res->codeDescription);
+	$logger->request_in($req, $res, $rid);
+
+	return $res;
+}
+
+
+
+
 sub handleRequest 
 {
 	my $self = shift;
 
   my $request = (ref($_[0]) ? shift : undef);
 	my $log_request = shift || '';
-
-	KS::Test::Logger->get_logger->info(
-		'Request <= '.$request->commandname .', '
-		.'socket: ' . ( $request->option('SOCKET') || '-') .', '
-		.'rid: '  . ( $request->can('rid') ? $request->rid : '-' ) 
-	);
 
 	# Reconnect to db if connection lost	
 	if( $self->checkSession() )
