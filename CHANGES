@@ -1,3 +1,4 @@
+
 The legend:
  [+] - new features
  [-] - removed functionality
@@ -22,6 +23,11 @@ Version 00.00.01 [DD.MM.YYYY] user
 
 
 
+Version 002.04.00 [02.04.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ? Improve logger output
+
+
 Version 002.03.00 [31.03.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ? Move DESTROY method from the Logger to the Test::Base module for more stability working
@@ -30,7 +36,6 @@ Version 002.03.00 [31.03.2023] yabl
   + Added set_level method for change log level on fly
   + Draft method for create domain
   ! The wrapper "process_request" is using now instead of "handleRequest" to start metaregistry
-
 
 
 Version 002.02.00 [29.03.2023] yabl
@@ -46,15 +51,12 @@ Version 002.01.00 [28.03.2023] yabl
   ? Small code improvment
 
 
-
 Version 002.00.00 [27.03.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   + Mock modules "Mock/PTF/Metaregistry.pm" and "Mock/PTF/Request.pm" for mocking responses from external interfaces
   + Garbase collector created (only for domain so far)
   + Logger module added based on Log4perl
   * Improved defined base path for project dir
-
-
 
 
 Version 001.00.00 [28.02.2023] yabl

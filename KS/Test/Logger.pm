@@ -65,7 +65,6 @@ sub new {
 sub _init {
 	my $self = shift;
 
-	use Log::Log4perl::Layout::ColoredPatternLayout ;
 	Log::Log4perl->init( {
 		'log4perl.category.event'   => 'DEBUG, event',
 		'log4perl.category.request' => 'DEBUG, request',
@@ -148,18 +147,21 @@ sub start_test {
 sub request {
 	my ($self, $req, $res, $rid, $direction) = @_;
 
-	$direction = {in => '<= ', out => '=> '}->{$direction || 'unknown'} || '';
+	$direction = {in => '<=', out => '=>'}->{$direction || 'unknown'} || '?=?';
 
 	$rid ||= $req->can('rid') ? $req->rid : '-';
 
 	my $command = ref $req eq 'PTF::Request' ? $req->commandname : '-';
 
+	my $req_str = ref $req eq 'PTF::Request'  ? $req->toString : ( $req || '*** empty request string ***' );
+	my $res_str = ref $res eq 'PTF::Response' ? $res->toString : ( $res || '*** empty response string ***' );
+
 	return $self->logger_request->info(
-		$direction . $command . ' ' . $rid . "\n"
+		$direction .' '. $command .' '. $rid . "\n"
 		. 'Socket [' . ($res->{is_mocked} ? 'mocked' : 'unmocked') . ']:  '. ( $req->option('SOCKET') || '-' ). "\n"
 		. "----------- REQUEST START -------------- \n"
-		. ( ref $req eq 'PTF::Request'  ? $req->toString : ( $req || '!empty string!' ) ) . "\n"
-		. ( ref $res eq 'PTF::Response' ? $res->toString : ( $res || '!empty string!' ) ) . "\n"
+		. KS::Util::trim($req_str) . "\n\n"
+		. KS::Util::trim($res_str) . "\n"
 		. "------------ REQUEST END ---------------- \n\n "
 	);
 
@@ -171,7 +173,8 @@ sub request {
 # logging input request and response as string
 # note: for details see "request" method
 sub request_in {
-	return shift->request(@_, 'in');
+	my ($self, $req, $res, $rid) = @_;
+	return $self->request($req, $res, $rid, 'in');
 }
 
 
@@ -179,7 +182,8 @@ sub request_in {
 # logging output request and response as string
 # note: for details see "request" method
 sub request_out {
-	return shift->request(@_, 'out');
+	my ($self, $req, $res, $rid) = @_;
+	return $self->request($req, $res, $rid, 'out');
 }
 
 

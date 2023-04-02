@@ -110,7 +110,7 @@ sub call {
 		my $response_body = KS::Util::read_file( $response_tt_file );
 		$res->parse( $response_body );
 
-		$self->logger->request($self, $res);
+		$self->logger->request_out($self, $res, $self->rid);
 
 		return $res;
 
@@ -155,7 +155,7 @@ sub _call_origin {
 
 	my $res = $ptf->sendCommand($self);
 
-	$self->logger->request($self, $res);
+	$self->logger->request_out($self, $res, $self->rid);
 
 
 	return $res;
