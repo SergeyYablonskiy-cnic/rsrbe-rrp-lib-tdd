@@ -29,6 +29,11 @@ sub log {
 
 
 
+## obj logger(void)
+# return the object KS::Test::Logger
+sub logger {
+	return KS::Test::Logger->get_logger;
+}
 
 
 1;

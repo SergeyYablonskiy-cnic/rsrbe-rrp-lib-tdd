@@ -222,7 +222,7 @@ sub base_path
 	# ../opt/batch-mreg
 	my @dir_list = $Bin ? $Bin : sort @INC;
 
-	my ($path) = grep { m[ /opt/(meta|batch|tld|cron) ]x } @dir_list;
+	my ($path) = grep { m[ /opt/(meta|batch|tld|cron|tools) ]x } @dir_list;
 
 	$path =~ m[ (.*/opt)/([^/]+)/?([^/]+)? ]x;
 	$path = $1.'/'.$2;

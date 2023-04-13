@@ -23,6 +23,12 @@ Version 00.00.01 [DD.MM.YYYY] user
 
 
 
+Version 002.05.00 [13.04.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Add stopwatch method
+  * Add the tools dir for define base dir path
+
+
 Version 002.04.00 [02.04.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ? Improve logger output

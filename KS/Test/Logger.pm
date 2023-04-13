@@ -22,8 +22,8 @@ use KS::Accessor (
 
 	for my $method ( qw( info debug warn error fatal ) ) {
 
-		*{ $method } = sub { 
-			return $_[0]->logger_event->$method( 
+		*{ $method } = sub {
+			return $_[0]->logger_event->$method(
 				( $method eq 'error' || $method eq 'fatal' )
 					? colored(['bright_red '], $_[1])
 					: $_[1]
@@ -53,12 +53,17 @@ sub new {
 	my $self = bless {
 		logfile_event   => $p{root_dir} . '/logs/event.log',
 		logfile_request => $p{root_dir} . '/logs/request.log',
+		stopwatch  => {
+			t0  => [ Time::HiRes::gettimeofday ],
+			num => 0,
+		}
 	}, $class;
 
 	$LOGGER = $self;
 
 	return $self->_init;
 }
+
 
 
 
@@ -184,6 +189,32 @@ sub request_in {
 sub request_out {
 	my ($self, $req, $res, $rid) = @_;
 	return $self->request($req, $res, $rid, 'out');
+}
+
+
+
+## bool stopwatch(void)
+# write to the event.log elapsed time
+# retval true for success
+sub stopwatch {
+	my $self = shift;
+
+	my($package, $filename, $line, $sub) = caller();
+
+	my $t1 = [ Time::HiRes::gettimeofday ];
+	my $interval = Time::HiRes::tv_interval ( $self->{stopwatch}{t0}, $t1);
+	$self->{stopwatch}{t0} = $t1;
+
+	# yellow color
+	$self->info( sprintf(
+		"\e[0;33mStopwatch [%02d]: %f\e[0m %s:%d",
+		$self->{stopwatch}{num}++,
+		$interval,
+		( split /(opt|\.\.)\//, $filename )[-1],
+		$line
+	));
+
+	return 1;
 }
 
 
