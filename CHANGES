@@ -29,6 +29,11 @@ Version 002.05.00 [13.04.2023] yabl
   * Add the tools dir for define base dir path
 
 
+Version 002.05.00 [19.04.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Special value "*" and "all" for "do not mock any requests at all"
+
+
 Version 002.04.00 [02.04.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ? Improve logger output

@@ -297,6 +297,14 @@ sub in_array_str {
 
 
 
+## string timestamp(void)
+# return current timestamp string in format 'YYYY-MM-DD hh:mm:ss'
+sub timestamp {
+	return format_date(time, 'YYYY-MM-DD hh:mm:ss');
+}
+
+
+
 # param "time" is required  (now, +1d, +2M и т.д.)
 # two-year-digist format is not supported
 sub format_date
@@ -373,6 +381,16 @@ sub expire_calc
 
 
 
+## bool pretty_xml(string xml)
+# return xml string in a pretty view format
+# arg "xml" - string xml
+# return string xml
+sub pretty_xml {
+	my $xml_str = shift;
+	my $doc = XML::LibXML->load_xml(string => $xml_str, {no_blanks => 1});
+	return $doc->toString(1);
+
+}
 
 
 

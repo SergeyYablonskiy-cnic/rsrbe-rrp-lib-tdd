@@ -76,8 +76,13 @@ sub call {
 
 	# Unmocked requests must redirected to the real interface
 	for my $skip_pattern ( @{ $MOCK_CONFIG->{skip} } ) {
+
+		return $self->_call_origin(@_)
+			if ($skip_pattern eq '*' or $skip_pattern eq 'all');
+
 		next unless $req_str =~ /$skip_pattern/ig;
 		return $self->_call_origin(@_);
+
 	}
 
 	$self->logger->info(
@@ -110,6 +115,7 @@ sub call {
 		my $response_body = KS::Util::read_file( $response_tt_file );
 		$res->parse( $response_body );
 
+		$self->logger->info('Response [mocked] '.$self->rid.': '.$res->codeDescription);
 		$self->logger->request_out($self, $res, $self->rid);
 
 		return $res;
@@ -133,9 +139,15 @@ sub _call_origin {
 
 	$self->reset_rid;
 
+	# $self->logger->info(
+	# 	'Request => '.$self->commandname . ', '
+	# 	.'rid: ' . $self->rid . ', '
+	# 	.'socket: ' . ( $self->option('SOCKET') || '-') 
+	# );
+
+	# alternative request log format
 	$self->logger->info(
-		'Request => '.$self->commandname . ', '
-		.'rid: ' . $self->rid . ', '
+		'Request  '.$self->rid.' => '.$self->commandname . ', '
 		.'socket: ' . ( $self->option('SOCKET') || '-') 
 	);
 
@@ -155,6 +167,7 @@ sub _call_origin {
 
 	my $res = $ptf->sendCommand($self);
 
+	$self->logger->info('Response '.$self->rid.': '.$res->codeDescription);
 	$self->logger->request_out($self, $res, $self->rid);
 
 
