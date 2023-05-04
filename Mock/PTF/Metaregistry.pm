@@ -14,7 +14,7 @@ sub SendPTFCommandRaw {
 
 	my $res = $req->call;
 
-	return $res->toString;
+	return ref $res ? $res->toString : $res;
 }
 
 

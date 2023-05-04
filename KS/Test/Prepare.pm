@@ -37,6 +37,9 @@ sub new {
 		RELATIVE =>  0,
 	) or die $Template::ERROR;
 
+	# available to use a tt-variable started with "_" and "."
+	$Template::Stash::PRIVATE = undef;
+
 	return $self;
 }
 
@@ -68,7 +71,7 @@ sub ptf_request {
 #    _skip    - arrayref list of patterns those shouldn't be mocked
 #    pattern  - string pattern for request string for mock 
 #               the value is a string or arrayref of strings for path to the mock response file
-# retval true for success
+# return obj configurated mock request (PTF::Request)
 # retval false for error
 sub mock_ptf_response {
 	my $self = shift;
@@ -80,7 +83,7 @@ sub mock_ptf_response {
 	my $mock_request = PTF::Request->new;
 	$mock_request->configure( \%p );
 
-	return 1;
+	return $mock_request;
 }
 
 

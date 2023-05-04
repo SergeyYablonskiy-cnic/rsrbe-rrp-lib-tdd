@@ -1,0 +1,5 @@
+severity = 4
+exclude  = RequireExplicitPackage
+
+[Perl::Critic::Policy::InputOutput::RequireBriefOpen]
+lines = 20

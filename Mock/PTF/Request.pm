@@ -30,6 +30,7 @@ sub configure {
 
 	$MOCK_CONFIG->{skip} = delete $pattern->{_skip} || [];
 	$MOCK_CONFIG->{patterns} = $pattern;
+	$MOCK_CONFIG->{trace}    = {};
 	# KS::Util::debug( $MOCK_CONFIG );
 
 	return 1;
@@ -39,6 +40,17 @@ sub configure {
 
 sub logger {
 	return KS::Test::Logger->get_logger;
+}
+
+
+
+## bool add_trace(list commands)
+# print to the debug.log call trace for command
+# param "commans"  - list of commands for trace
+sub add_trace {
+	my $self = shift;
+	map { $MOCK_CONFIG->{trace}{ lc $_ } = 1 } @_;
+	return 1;
 }
 
 
@@ -122,7 +134,12 @@ sub call {
 
 	}
 
-	$self->logger->error('Can not find any suitable MOCK response for the request rid: '.$self->rid);
+	# print a call trace for requests if needed
+	KS::Util::debug_trace($self->commandname)
+		if $MOCK_CONFIG->{trace}{ lc $self->commandname };
+
+	$self->logger->request_out($self, "[INTERNAL RESPONSE]\nERROR: can not find any suitable MOCK response", $self->rid);
+	$self->logger->error('Can not find any suitable MOCK response for the request "'.$self->commandname.'" rid: '.$self->rid);
 
 	return undef;
 }
@@ -139,16 +156,10 @@ sub _call_origin {
 
 	$self->reset_rid;
 
-	# $self->logger->info(
-	# 	'Request => '.$self->commandname . ', '
-	# 	.'rid: ' . $self->rid . ', '
-	# 	.'socket: ' . ( $self->option('SOCKET') || '-') 
-	# );
-
-	# alternative request log format
 	$self->logger->info(
-		'Request  '.$self->rid.' => '.$self->commandname . ', '
-		.'socket: ' . ( $self->option('SOCKET') || '-') 
+		'Request => ' . $self->commandname . ' '
+		. $self->rid . ' '
+		. ( $self->option('SOCKET') || '-')
 	);
 
 	my $ptf = $self->option('PTF');
@@ -167,7 +178,7 @@ sub _call_origin {
 
 	my $res = $ptf->sendCommand($self);
 
-	$self->logger->info('Response '.$self->rid.': '.$res->codeDescription);
+	$self->logger->info('Response '.$self->rid.' '.$res->codeDescription);
 	$self->logger->request_out($self, $res, $self->rid);
 
 

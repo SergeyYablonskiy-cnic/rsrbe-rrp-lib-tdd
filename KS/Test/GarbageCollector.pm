@@ -98,6 +98,7 @@ sub _delete_domain {
 	$self->dbh->do( 'DELETE FROM domainNameservers WHERE domain = ?', undef, $domain );
 	$self->dbh->do( 'DELETE FROM transfers WHERE domain = ?',         undef, $domain );
 	$self->dbh->do( 'DELETE FROM jobqueue WHERE object_id = ?',       undef, $domain );
+	$self->dbh->do( 'DELETE FROM claimsNotices WHERE domain = ?',     undef, $domain );
 	$self->dbh->do( 'DELETE FROM commandLog WHERE object_id = ?',     undef, $domain );
 	$self->dbh->do( 'DELETE FROM domains WHERE domain = ?',           undef, $domain );
 

@@ -23,6 +23,12 @@ Version 00.00.01 [DD.MM.YYYY] user
 
 
 
+Version 002.06.00 [04.05.2023] yabl
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  + Improve logging and add a trace option for external requests
+  + Add .perltidy and .perctitic setting files
+
+
 Version 002.05.00 [13.04.2023] yabl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   + Add stopwatch method

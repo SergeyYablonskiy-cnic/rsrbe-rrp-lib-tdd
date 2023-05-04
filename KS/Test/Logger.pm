@@ -133,6 +133,7 @@ sub start_test {
 
 	Test::Most::note($test_name);
 	$self->info( colored(['green'], "***** $test_name ***** $filename:$line") );
+	$self->logger_request->info( "***** $test_name ***** $filename:$line");
 
 	return 1;
 }
@@ -163,11 +164,11 @@ sub request {
 
 	return $self->logger_request->info(
 		$direction .' '. $command .' '. $rid . "\n"
-		. 'Socket [' . ($res->{is_mocked} ? 'mocked' : 'unmocked') . ']:  '. ( $req->option('SOCKET') || '-' ). "\n"
-		. "----------- REQUEST START -------------- \n"
+		. 'Socket [' . (ref $res && $res->{is_mocked} ? 'mocked' : 'unmocked') . ']:  '. ( $req->option('SOCKET') || '-' ). "\n"
+		. "---------------- REQUEST START ---------------- \n"
 		. KS::Util::trim($req_str) . "\n\n"
 		. KS::Util::trim($res_str) . "\n"
-		. "------------ REQUEST END ---------------- \n\n "
+		. "---------------- REQUEST END ---------------- \n\n "
 	);
 
 	return 1;

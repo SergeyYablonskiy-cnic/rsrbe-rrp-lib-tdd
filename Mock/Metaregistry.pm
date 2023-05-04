@@ -480,9 +480,9 @@ sub process_request {
 	my $logger = KS::Test::Logger->get_logger;
 
 	$logger->info(
-		'Request <= '.$req->commandname .', '
-		. 'socket: ' . ( $req->option('SOCKET') || '-') .', '
-		. 'rid: '    . $rid
+		'Request <= ' . $req->commandname . ' '
+		. $rid . ' '
+		. ( $req->option('SOCKET') || '-')
 	);
 
 	my $res = $self->handleRequest($req);
