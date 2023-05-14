@@ -11,26 +11,27 @@ use PTF::Response;
 our $MOCK_CONFIG = {
 	patterns => {},
 	counter  => {},
+	trace    => {},
 };
 
 
 
-## bool configure(hashref config)
-# configure mock responses
-# prepare mock response for external interfaces
+## bool configure(hash config)
+# configure responses, prepare mock for external interfaces
 # param "p" hash with keys:
 #    _skip    - arrayref list of patterns those shouldn't be mocked
+#    _socket  - string socket string we would like to use for all external requests
 #    pattern  - string pattern for request string for mock 
 #               the value is a string or arrayref of strings for path to the mock response file
 # retval true for success
 # retval false for error
 sub configure {
 	my $self    = shift;
-	my $pattern = shift;
+	my %pattern = @_;
 
-	$MOCK_CONFIG->{skip} = delete $pattern->{_skip} || [];
-	$MOCK_CONFIG->{patterns} = $pattern;
-	$MOCK_CONFIG->{trace}    = {};
+	$MOCK_CONFIG->{skip}     = delete $pattern{_skip} || [];
+	$MOCK_CONFIG->{socket}   = delete $pattern{_socket} || '';
+	$MOCK_CONFIG->{patterns} = \%pattern;
 	# KS::Util::debug( $MOCK_CONFIG );
 
 	return 1;
@@ -73,6 +74,14 @@ sub rid {
 
 
 
+## bool _is_socket(str value)
+# return TRUE if value is a socket string like 'mregd+udp://whois:whois0@10.253.15.3:6842'
+sub _is_socket {
+	return $_[1] =~ m|^.+://.+:.+$|;
+}
+
+
+
 ## obj call(void)
 # mock method for PTF::Request::call
 # return obj PTF::Response for success
@@ -80,6 +89,9 @@ sub rid {
 sub call {
 	my $self = shift;
 
+	# print a call trace for requests if needed
+	KS::Util::debug_trace($self->commandname)
+		if $MOCK_CONFIG->{trace}{ lc $self->commandname };
 
 	# generate uniq request-id
 	$self->reset_rid;
@@ -87,25 +99,19 @@ sub call {
 	my $req_str = $self->toString;
 
 	# Unmocked requests must redirected to the real interface
-	for my $skip_pattern ( @{ $MOCK_CONFIG->{skip} } ) {
-
+	for my $pass_pattern ( @{ $MOCK_CONFIG->{skip} } )
+	{
 		return $self->_call_origin(@_)
-			if ($skip_pattern eq '*' or $skip_pattern eq 'all');
-
-		next unless $req_str =~ /$skip_pattern/ig;
-		return $self->_call_origin(@_);
-
+			if ($pass_pattern  eq '*' 
+				or $pass_pattern eq 'all'
+				or $req_str =~ /$pass_pattern/ig
+			);
 	}
 
-	$self->logger->info(
-		'Request [mocked] => '.$self->commandname .', '
-		.'rid: '  . $self->rid .', '
-		.'socket: ' . ( $self->option('SOCKET') || '-')
-	);
 
 	# Mocked responses
-	for my $pattern ( keys %{ $MOCK_CONFIG->{patterns} } ) {
-
+	for my $pattern ( keys %{ $MOCK_CONFIG->{patterns} } )
+	{
 		next unless $req_str =~ /$pattern/ig;
 
 		my $res = PTF::Response->new;
@@ -116,11 +122,24 @@ sub call {
 			? $MOCK_CONFIG->{counter}{$pattern} + 1
 			: 0;
 
-		# the mock response might be binded only to the pattern 
+		# the mock response might be binded only to the pattern
 		# or to the number of request
-		my $response_tt_file = ref $MOCK_CONFIG->{patterns}{$pattern}
+		my $value = ref $MOCK_CONFIG->{patterns}{$pattern}
 			? $MOCK_CONFIG->{patterns}{$pattern}[ $MOCK_CONFIG->{counter}{$pattern} ]
 			: $MOCK_CONFIG->{patterns}{$pattern};
+
+		# the value might be a socket string that we would like to use for this particular request
+		if ( $self->_is_socket($value) ) {
+			return $self->_call_origin( '-SOCKET' => $value, @_ );
+		}
+
+		my $response_tt_file = $value;
+
+		$self->logger->info(
+			'Request [mocked] => '.$self->commandname .', '
+			.'rid: '  . $self->rid .', '
+			.'socket: ' . ( $self->option('SOCKET') || '-')
+		);
 
 		$self->logger->debug('Mock TLD response for the pattern "'.$pattern.'": '.$response_tt_file);
 
@@ -131,12 +150,7 @@ sub call {
 		$self->logger->request_out($self, $res, $self->rid);
 
 		return $res;
-
 	}
-
-	# print a call trace for requests if needed
-	KS::Util::debug_trace($self->commandname)
-		if $MOCK_CONFIG->{trace}{ lc $self->commandname };
 
 	$self->logger->request_out($self, "[INTERNAL RESPONSE]\nERROR: can not find any suitable MOCK response", $self->rid);
 	$self->logger->error('Can not find any suitable MOCK response for the request "'.$self->commandname.'" rid: '.$self->rid);
@@ -150,9 +164,14 @@ sub call {
 # original "call" method for pass request to real interfaces
 # return obj PTF::Response
 sub _call_origin {
-	my $self = shift;
+	my ($self, %p) = @_;
 
-	$self->set(@_) if @_;
+	my $use_socket = $p{'-SOCKET'} || $MOCK_CONFIG->{socket};
+
+	if ( $use_socket ) {
+		$p{'-SOCKET'} = $use_socket;
+		$self->logger->debug('"'.$p{'-SOCKET'}.'" socket force usage is requested')
+	}
 
 	$self->reset_rid;
 

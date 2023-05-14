@@ -133,7 +133,7 @@ sub start_test {
 
 	Test::Most::note($test_name);
 	$self->info( colored(['green'], "***** $test_name ***** $filename:$line") );
-	$self->logger_request->info( "***** $test_name ***** $filename:$line");
+	$self->logger_request->info( "start test: \"$test_name\" $filename:$line");
 
 	return 1;
 }

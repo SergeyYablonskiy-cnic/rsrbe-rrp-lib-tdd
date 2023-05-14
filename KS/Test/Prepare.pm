@@ -11,10 +11,11 @@ use KS::Accessor (
 	dbh    => 'dbh',
 	mreg   => 'mreg:rw',
 	logger => 'logger',
+	model  => 'model',
 );
 
 use PTF::Request;
-
+use KS::Test::Model;
 use Template;
 
 
@@ -26,15 +27,17 @@ sub new {
 		project_dir => $p{project_dir},
 		mreg        => $p{mreg},
 		logger      => $p{logger},
+		model       => $p{model},
 		dbh         => $p{dbh},
 		tt          => undef,
+		model       => undef,
 	}, $class;
 
 	$self->{tt} = Template->new(
 		INCLUDE_PATH => $p{project_dir},
-		ABSOLUTE =>  0,
-		ENCODING => 'utf8',
-		RELATIVE =>  0,
+		ABSOLUTE     =>  0,
+		ENCODING     => 'utf8',
+		RELATIVE     =>  0,
 	) or die $Template::ERROR;
 
 	# available to use a tt-variable started with "_" and "."
@@ -43,6 +46,25 @@ sub new {
 	return $self;
 }
 
+
+
+# ## @method obj ptf_request(string file_path, hash p)
+# # prepare PTF request object
+# # @param \c file_path - \c string path to the template file
+# #                       if file_path is a multiline string 
+# #                       it will treated as template, not a file path
+# # @param \c p params  - \c key-value pairs for the template variables
+# # @return \c obj PTF::Request
+# sub ptf_request {
+# 	my ($self, $fpath, %p) = @_;
+
+# 	# if we got multiline in the fpath then it is a template string actually
+# 	my $tmpl = $fpath =~ /\n/m ? $fpath : KS::Util::read_file($fpath);
+# 	my $content = $self->{tt}->context->process(\$tmpl, \%p);
+# 	my $req = PTF::Request->new->parse($content);
+
+# 	return $req;
+# }
 
 
 ## @method obj ptf_request(string file_path, hash p)
@@ -55,6 +77,9 @@ sub new {
 sub ptf_request {
 	my ($self, $fpath, %p) = @_;
 
+	require "Mock/PTF/Request.pm";
+	require "Mock/PTF/Metaregistry.pm";
+
 	# if we got multiline in the fpath then it is a template string actually
 	my $tmpl = $fpath =~ /\n/m ? $fpath : KS::Util::read_file($fpath);
 	my $content = $self->{tt}->context->process(\$tmpl, \%p);
@@ -62,30 +87,6 @@ sub ptf_request {
 
 	return $req;
 }
-
-
-
-## mock_ptf_response(hash p)
-# prepare mock response for external interfaces
-# param "p" hash with keys:
-#    _skip    - arrayref list of patterns those shouldn't be mocked
-#    pattern  - string pattern for request string for mock 
-#               the value is a string or arrayref of strings for path to the mock response file
-# return obj configurated mock request (PTF::Request)
-# retval false for error
-sub mock_ptf_response {
-	my $self = shift;
-	my %p    = @_;
-
-	require "Mock/PTF/Request.pm";
-	require "Mock/PTF/Metaregistry.pm";
-
-	my $mock_request = PTF::Request->new;
-	$mock_request->configure( \%p );
-
-	return $mock_request;
-}
-
 
 
 

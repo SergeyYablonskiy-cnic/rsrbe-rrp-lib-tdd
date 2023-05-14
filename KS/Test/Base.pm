@@ -23,7 +23,7 @@ use lib (
 	$ROOT_DIR . '/lib-mreg',
 	$ROOT_DIR . '/metaregistry5',
 	$ROOT_DIR . '/metaregistry5/Lib',
-	$ROOT_DIR . '/lib-test'
+	$ROOT_DIR . '/lib-tdd'
 );
 
 
@@ -42,6 +42,7 @@ use KS::Accessor (
 	root_dir    => 'root_dir',
 	db          => 'db',
 	dbh         => 'dbh',
+	model       => 'model',
 	prepare     => 'prepare',
 	gc          => 'gc',
 	mreg        => 'mreg',
@@ -59,6 +60,7 @@ sub new {
 		project_dir => $PROJECT_DIR,
 		db          => undef,
 		dbh         => undef,
+		model       => undef,
 		prepare     => undef,
 		mreg        => undef,
 		gc          => undef,
@@ -78,9 +80,16 @@ sub _init {
 	$self->{db}  = DB->new({MASTER => 1, SLAVE1 => 1, OPMODE => 'DEV'});
 	$self->{dbh} = $self->db->master;
 
+	$self->{model} = KS::Test::Model->new(
+		logger => $self->logger,
+		db     => $self->db,
+	);
+
 	$self->{prepare} = KS::Test::Prepare->new( 
 		project_dir => $self->project_dir,
 		logger      => $self->logger,
+		model       => $self->model,
+		db          => $self->db,
 		dbh         => $self->dbh,
 	);
 

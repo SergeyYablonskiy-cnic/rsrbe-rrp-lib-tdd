@@ -4,7 +4,7 @@
 -ci=4       # --continuation-indentation=n
 
 # Whitespace Control
--pt=2       #  ($test) and ($test, $test2)
+-pt=1       #  ( $test ) and ( $test, $test2 )
 -bt=2       #  {'arg1'} and {TEST => 1}
 -sbt=2      #  ['arg1'] and ['arg1','arg2']
 -bbt=1 #2   # --block-brace-tightness
